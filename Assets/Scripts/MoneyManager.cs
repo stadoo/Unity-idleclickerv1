@@ -19,6 +19,7 @@ public class MoneyManager : MonoBehaviour
         if (PlayerPrefs.HasKey("coins"))
         {
             //PlayerPrefs.DeleteAll();
+            CountOfflineCoins();
             _coins = PlayerPrefs.GetFloat("coins");
             _coinsText.text = _coins.ToString("N8");
         }
@@ -49,7 +50,40 @@ public class MoneyManager : MonoBehaviour
         PlayerPrefs.SetFloat("coins", _coins);
         _coinsText.text = _coins.ToString("N8");
         yield return new WaitForSeconds(_AutoWait);
+
         StartCoroutine(AutoCoins());
     }
-    
+
+    private void CountOfflineCoins()
+    {
+        TimeSpan timespan;
+        if (PlayerPrefs.HasKey("LastSessionData"))
+        {
+            timespan = DateTime.Now - DateTime.Parse(PlayerPrefs.GetString("LastSessionData"));
+            _coins = _coinsAutoMultiplier * (int)timespan.TotalSeconds;
+            PlayerPrefs.SetFloat("coins", _coins);
+            _coinsText.text = _coins.ToString("N8");
+            Debug.Log(timespan.TotalSeconds);
+        }
+        else
+        {
+            Debug.Log("LastSession Key still not exist");
+        }
+    }
+#if UNITY_ANDROID && !UNITY_EDITOR
+    private void OnApplicationPause(bool pause)
+    {
+        if (pause)
+        {
+            PlayerPrefs.SetString("LastSessionDate", DateTime.Now.ToString());
+        }
+    }
+#else
+    private void OnApplicationQuit()
+    {
+        PlayerPrefs.SetString("LastSessionDate", DateTime.Now.ToString());
+
+    }
+#endif
+
 }
